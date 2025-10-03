@@ -36,10 +36,29 @@
     <a href="{% url 'movies.show' id=movie.id %}" class="btn bg-dark text-white">
          {{ movie.name }}
  </a>
+
+<p class="mb-2">
+    {% if movie.amount_left == None %}
+        Stock: Unlimited
+    {% else %}
+        Stock: {{ movie.amount_left }}
+    {% endif %}
+</p>
+
+{% if movie.amount_left == None or movie.amount_left > 0 %}
+    <a href="{% url 'movies.purchase_movie' id=movie.id %}" class="btn btn-success">
+        Purchase
+    </a>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
  </div>
  </div>
  </div>
- {% endfor %}
  </div>
  </div>
 </div>

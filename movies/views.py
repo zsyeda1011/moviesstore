@@ -1,18 +1,57 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Movie, Review
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from .models import Petition
+
+def petitions_index(request):
+    petitions = Petition.objects.all()
+    return render(request, 'movies/petitions_index.html', {'petitions': petitions})
+
+@login_required
+def petition_create(request):
+    if request.method == 'POST':
+        petition = Petition()
+        petition.movie_name = request.POST['movie_name']
+        petition.creator = request.user
+        petition.save()
+        return redirect('petitions.index')
+    else:
+        return render(request, 'movies/petitions_create.html')
+    
+@login_required
+def petition_vote(request, id):
+    petition = get_object_or_404(Petition, id=id)
+    petition.yes_votes += 1
+    petition.save()
+    return redirect('petitions.index')
 
 def index(request):
- template_data = {}
- template_data['title'] = 'Movies'
- template_data['movies'] = Movie.objects.all()
- return render(request, 'movies/index.html',
- {'template_data': template_data})
+    movies_in_stock = Movie.objects.filter(
+        Q(amount_left__gt=0) | Q(amount_left__isnull=True)
+    )
 
- template_data = {}
- template_data['title'] = 'Movies'
- template_data['movies'] = movies
- return render(request, 'movies/index.html', {'template_data': template_data})
+    template_data = {}
+    template_data['title'] = 'Movies'
+    template_data['movies'] = movies_in_stock
+
+    return render(request, 'movies/index.html', {'template_data': template_data})
+
+template_data = {} 
+template_data['title'] = 'Movies'
+
+
+movies = Movie.objects.all()
+template_data['movies'] = movies 
+
+@login_required
+def purchase_movie(request, id):
+    movie = get_object_or_404(Movie, id=id)
+
+    if movie.amount_left is None or movie.amount_left > 0:
+        movie.purchase()
+
+    return redirect('movies.show', id=movie.id)
 
 def show(request, id):
      movie = Movie.objects.get(id=id)
